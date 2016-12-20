@@ -120,4 +120,14 @@ public class KinesisSource extends AbstractSource implements Configurable, Polla
   public Status process() throws EventDeliveryException {
     return null;
   }
+
+  @Override
+  public long getBackOffSleepIncrement() {
+	return 1000;
+  }
+
+  @Override
+  public long getMaxBackOffSleepInterval() {
+	return 1000;
+  }
 }
