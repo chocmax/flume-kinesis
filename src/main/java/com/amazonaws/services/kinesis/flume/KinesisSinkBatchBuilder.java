@@ -2,6 +2,9 @@ package com.amazonaws.services.kinesis.flume;
 
 import com.amazonaws.services.kinesis.model.PutRecordsRequestEntry;
 import com.google.common.collect.Lists;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.flume.Channel;
@@ -19,6 +22,8 @@ public class KinesisSinkBatchBuilder {
   private int maxEventSize;
   private boolean usePartitionKeyFromEvent;
 
+  private JsonParser jsonParser;
+
   public KinesisSinkBatchBuilder(
     int batchSize,
     int maxBatchByteSize,
@@ -29,6 +34,8 @@ public class KinesisSinkBatchBuilder {
     this.usePartitionKeyFromEvent = usePartitionKeyFromEvent;
     this.maxBatchByteSize = maxBatchByteSize;
     this.maxEventSize = maxEventSize;
+
+    this.jsonParser = new JsonParser();
   }
 
   KinesisRecordsBatch buildBatch(Channel ch) {
@@ -82,10 +89,17 @@ public class KinesisSinkBatchBuilder {
 
   private PutRecordsRequestEntry buildRequestEntry(Event event) {
     String partitionKey;
-    if (usePartitionKeyFromEvent && event.getHeaders().containsKey("key")) {
-      partitionKey = event.getHeaders().get("key");
-    } else {
-      partitionKey = "pk_" + new Random().nextInt(Integer.MAX_VALUE);
+    try {
+      String line = new String(event.getBody(), "UTF-8");
+      JsonObject jsonObject = jsonParser.parse(line).getAsJsonObject();
+      partitionKey = jsonObject.get("tapAdId").getAsString();
+    } catch (Exception e) {
+      LOG.error("Get partition key error", e);
+      if (usePartitionKeyFromEvent && event.getHeaders().containsKey("key")) {
+        partitionKey = event.getHeaders().get("key");
+      } else {
+        partitionKey = "pk_" + new Random().nextInt(Integer.MAX_VALUE);
+      }
     }
     LOG.debug("partitionKey: " + partitionKey);
     PutRecordsRequestEntry entry = new PutRecordsRequestEntry();
