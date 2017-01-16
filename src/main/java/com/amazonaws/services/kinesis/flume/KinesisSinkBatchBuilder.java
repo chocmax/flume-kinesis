@@ -10,6 +10,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.flume.Channel;
 import org.apache.flume.Event;
 
+import java.net.URLDecoder;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Random;
@@ -92,7 +93,12 @@ public class KinesisSinkBatchBuilder {
     try {
       String line = new String(event.getBody(), "UTF-8");
       JsonObject jsonObject = jsonParser.parse(line).getAsJsonObject();
-      partitionKey = jsonObject.get("tapAdId").getAsString();
+
+      String data = jsonObject.get("data").getAsString();
+      String decodedData = URLDecoder.decode(data, "UTF-8");
+
+      JsonObject dataJsonObject = jsonParser.parse(decodedData).getAsJsonObject();
+      partitionKey = dataJsonObject.get("identify").getAsString();
     } catch (Exception e) {
       LOG.error("Get partition key error", e);
       if (usePartitionKeyFromEvent && event.getHeaders().containsKey("key")) {
