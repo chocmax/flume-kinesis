@@ -100,7 +100,6 @@ public class KinesisSinkBatchBuilder {
       JsonObject dataJsonObject = jsonParser.parse(decodedData).getAsJsonObject();
       partitionKey = dataJsonObject.get("identify").getAsString();
     } catch (Exception e) {
-      LOG.error("Get partition key error", e);
       if (usePartitionKeyFromEvent && event.getHeaders().containsKey("key")) {
         partitionKey = event.getHeaders().get("key");
       } else {
