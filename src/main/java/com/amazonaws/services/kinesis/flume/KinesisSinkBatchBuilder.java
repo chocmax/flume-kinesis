@@ -99,6 +99,9 @@ public class KinesisSinkBatchBuilder {
 
       JsonObject dataJsonObject = jsonParser.parse(decodedData).getAsJsonObject();
       partitionKey = dataJsonObject.get("identify").getAsString();
+      if (partitionKey.length() > 256){
+        partitionKey = partitionKey.substring(0, 256);
+      }
     } catch (Exception e) {
       if (usePartitionKeyFromEvent && event.getHeaders().containsKey("key")) {
         partitionKey = event.getHeaders().get("key");
