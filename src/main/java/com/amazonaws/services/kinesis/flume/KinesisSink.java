@@ -114,11 +114,14 @@ public class KinesisSink extends AbstractSink implements Configurable {
     batchBuilder = new KinesisSinkBatchBuilder(
             batchSize, maximumBatchSizeInBytes, maximumEventSizeInBytes, partitionKeyFromEvent);
     sinkCounter.start();
+    super.start();
   }
 
   @Override
   public void stop() {
+    kinesisClient.shutdown();
     sinkCounter.stop();
+    super.stop();
   }
 
   @Override

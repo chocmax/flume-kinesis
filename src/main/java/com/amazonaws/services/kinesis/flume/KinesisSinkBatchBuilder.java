@@ -90,24 +90,10 @@ public class KinesisSinkBatchBuilder {
 
   private PutRecordsRequestEntry buildRequestEntry(Event event) {
     String partitionKey;
-    try {
-      String line = new String(event.getBody(), "UTF-8");
-      JsonObject jsonObject = jsonParser.parse(line).getAsJsonObject();
-
-      String data = jsonObject.get("data").getAsString();
-      String decodedData = URLDecoder.decode(data, "UTF-8");
-
-      JsonObject dataJsonObject = jsonParser.parse(decodedData).getAsJsonObject();
-      partitionKey = dataJsonObject.get("identify").getAsString();
-      if (partitionKey.length() > 256){
-        partitionKey = partitionKey.substring(0, 256);
-      }
-    } catch (Exception e) {
-      if (usePartitionKeyFromEvent && event.getHeaders().containsKey("key")) {
-        partitionKey = event.getHeaders().get("key");
-      } else {
-        partitionKey = "pk_" + new Random().nextInt(Integer.MAX_VALUE);
-      }
+    if (usePartitionKeyFromEvent && event.getHeaders().containsKey("key")) {
+      partitionKey = event.getHeaders().get("key");
+    } else {
+      partitionKey = "pk_" + new Random().nextInt(Integer.MAX_VALUE);
     }
     LOG.debug("partitionKey: " + partitionKey);
     PutRecordsRequestEntry entry = new PutRecordsRequestEntry();
