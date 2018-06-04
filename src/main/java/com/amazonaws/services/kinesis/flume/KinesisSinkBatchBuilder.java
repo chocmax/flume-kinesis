@@ -90,6 +90,37 @@ public class KinesisSinkBatchBuilder {
 
   private PutRecordsRequestEntry buildRequestEntry(Event event) {
     String partitionKey;
+    try {
+        String line = new String(event.getBody(), "UTF-8");
+        JsonObject jsonObject = jsonParser.parse(line).getAsJsonObject();
+
+        String data = jsonObject.get("data").getAsString();
+        String decodedData = URLDecoder.decode(data, "UTF-8");
+
+        JsonObject propertiesJsonObject = jsonParser.parse(decodedData).getAsJsonObject().get("properties").getAsJsonObject();
+        // if has advertisement id, then use ad_id for partition, otherwise use identify for partition
+        int ad_id = 0;
+        String module = null;
+        try {
+        	ad_id = propertiesJsonObject.get("adId").getAsInt();
+        	module = jsonParser.parse(decodedData).getAsJsonObject().get("module").getAsString();
+		} catch (Exception e) {
+		}
+        if (ad_id != 0 && "AdAnalysis".equals(module)) {
+        	partitionKey = String.valueOf(ad_id);
+        } else {
+            partitionKey = propertiesJsonObject.get("identify").getAsString();
+        }
+        if (partitionKey.length() > 256){
+          partitionKey = partitionKey.substring(0, 256);
+        }
+      } catch (Exception e) {
+        if (usePartitionKeyFromEvent && event.getHeaders().containsKey("key")) {
+          partitionKey = event.getHeaders().get("key");
+        } else {
+          partitionKey = "pk_" + new Random().nextInt(Integer.MAX_VALUE);
+        }
+      }
     if (usePartitionKeyFromEvent && event.getHeaders().containsKey("key")) {
       partitionKey = event.getHeaders().get("key");
     } else {
