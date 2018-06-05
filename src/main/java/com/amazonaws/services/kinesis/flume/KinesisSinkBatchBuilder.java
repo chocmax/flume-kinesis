@@ -97,19 +97,19 @@ public class KinesisSinkBatchBuilder {
         String data = jsonObject.get("data").getAsString();
         String decodedData = URLDecoder.decode(data, "UTF-8");
 
-        JsonObject propertiesJsonObject = jsonParser.parse(decodedData).getAsJsonObject().get("properties").getAsJsonObject();
+        JsonObject dataJsonObject = jsonParser.parse(decodedData).getAsJsonObject();
         // if has advertisement id, then use ad_id for partition, otherwise use identify for partition
         int ad_id = 0;
         String module = null;
         try {
-        	ad_id = propertiesJsonObject.get("adId").getAsInt();
-        	module = jsonParser.parse(decodedData).getAsJsonObject().get("module").getAsString();
+        	ad_id = dataJsonObject.get("properties").getAsJsonObject().get("adId").getAsInt();
+        	module = dataJsonObject.get("module").getAsString();
 		} catch (Exception e) {
 		}
         if (ad_id != 0 && "AdAnalysis".equals(module)) {
         	partitionKey = String.valueOf(ad_id);
         } else {
-            partitionKey = propertiesJsonObject.get("identify").getAsString();
+            partitionKey = dataJsonObject.get("identify").getAsString();
         }
         if (partitionKey.length() > 256){
           partitionKey = partitionKey.substring(0, 256);
