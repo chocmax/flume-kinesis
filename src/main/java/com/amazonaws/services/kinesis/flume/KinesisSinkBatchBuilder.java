@@ -114,17 +114,12 @@ public class KinesisSinkBatchBuilder {
         if (partitionKey.length() > 256){
           partitionKey = partitionKey.substring(0, 256);
         }
-      } catch (Exception e) {
+    } catch (Exception e) {
         if (usePartitionKeyFromEvent && event.getHeaders().containsKey("key")) {
           partitionKey = event.getHeaders().get("key");
         } else {
           partitionKey = "pk_" + new Random().nextInt(Integer.MAX_VALUE);
         }
-      }
-    if (usePartitionKeyFromEvent && event.getHeaders().containsKey("key")) {
-      partitionKey = event.getHeaders().get("key");
-    } else {
-      partitionKey = "pk_" + new Random().nextInt(Integer.MAX_VALUE);
     }
     LOG.debug("partitionKey: " + partitionKey);
     PutRecordsRequestEntry entry = new PutRecordsRequestEntry();
